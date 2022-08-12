@@ -12,17 +12,77 @@ const list = (req, res) => {
   res.json(dishes);
 };
 
+const nameValidation = (req, res, next) => {
+  const {
+    data: { name = null },
+  } = req.body;
+
+  if (name === null || name === "") {
+    next({
+      status: 400,
+      message: "Name is required",
+    });
+  } else {
+    next();
+  }
+};
+
+const descriptionValidation = (req, res, next) => {
+  const {
+    data: { description },
+  } = req.body;
+  if (description == null || description === "") {
+    next({
+      status: 400,
+      message: "Description is required",
+    });
+  } else {
+    next();
+  }
+};
+
+const priceValidation = (req, res, next) => {
+  const {
+    data: { price = null },
+  } = req.body;
+
+  if (price === null || price === "" || price <= 0 || typeof price !== "number") {
+    next({
+      status: 400,
+      message: "Price is required and must be a number",
+    });
+  } else {
+    next();
+  }
+};
+
+const imgValidation = (req, res, next) => {
+    const {
+        data: { image_url = null },
+    } = req.body;
+
+    if (image_url === null || image_url === "") {
+        next({
+            status: 400,
+            message: "Image URL is required",
+        });
+    } else {
+        next();
+    }
+}
+
 //CRUD
 
 const create = (req, res) => {
-  const newDish = {
+  const data = {
     id: nextId(dishes),
     ...req.body,
   };
-  dishes.push(newDish);
-  res.json({ data: newDish });
+  dishes.push(data);
+  res.json(data);
 };
 
 module.exports = {
   list,
+  create: [nameValidation, descriptionValidation, priceValidation, imgValidation, create],
 };
