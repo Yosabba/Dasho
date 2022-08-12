@@ -8,4 +8,6 @@ const nextId = require("../utils/nextId");
 
 // TODO: Implement the /dishes handlers needed to make the tests pass
 
-
+const list = (req, res) => {
+  res.json(dishes);
+};
