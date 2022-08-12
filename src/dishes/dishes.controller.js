@@ -11,3 +11,18 @@ const nextId = require("../utils/nextId");
 const list = (req, res) => {
   res.json(dishes);
 };
+
+//CRUD
+
+const create = (req, res) => {
+  const newDish = {
+    id: nextId(dishes),
+    ...req.body,
+  };
+  dishes.push(newDish);
+  res.json({ data: newDish });
+};
+
+module.exports = {
+  list,
+};

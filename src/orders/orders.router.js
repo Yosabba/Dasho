@@ -6,18 +6,18 @@ const methodDisallowed = require("../errors/methodNotAllowed");
 
 router
   .route("/orders/:orderId")
-  .post(controller.create)
-  .get(controller.read)
-  .put(controller.update)
-  .delete(controller.delete)
-  .all(methodNotAllowed);
+  // .post(controller.create)
+  // .get(controller.read)
+  // .put(controller.update)
+  // .delete(controller.delete)
+  // .all(methodNotAllowed);
 
 router
   .route("/")
-  .post(controller.create)
-  .get(controller.list)
-  .put(controller.update)
-  .delete(controller.delete)
-  .all(methodNotAllowed);
+  // .post(controller.create)
+  // .get(controller.list)
+  // .put(controller.update)
+  // .delete(controller.delete)
+  // .all(methodNotAllowed);
 
 module.exports = router;
