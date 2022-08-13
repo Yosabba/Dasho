@@ -76,6 +76,20 @@ const imgValidation = (req, res, next) => {
   }
 };
 
+const idValidator = (req, res, next) => {
+  const {
+    data: { id },
+  } = req.body;
+  if (id === "") {
+    next({
+      status: 400,
+      message: "ID is required",
+    });
+  } else {
+    next();
+  }
+};
+
 const doesDishExist = (req, res, next) => {
   const { dishId } = req.params;
   const dish = dishes.find((dish) => dish.id == dishId);
@@ -83,11 +97,27 @@ const doesDishExist = (req, res, next) => {
   if (!dish) {
     next({
       status: 404,
-      message: "Dish not found",
+      message: `Dish does not exist: ${dishId}.`,
     });
   }
   res.locals.dish = dish;
   next();
+};
+
+const doesDishIdMatchRoute = (req, res, next) => {
+  const { dishId } = req.params;
+  const {
+    data: { id },
+  } = req.body;
+
+  if (!id){
+    next();
+  } else if(id && id !== dishId){
+    next({
+      status: 400,
+      message: `Dish ID does not match route: ${dishId}`,
+    });
+  }
 };
 
 //CRUD
@@ -126,5 +156,14 @@ module.exports = {
     create,
   ],
   read: [doesDishExist, read],
-  update: [doesDishExist, update],
+  update: [
+    nameValidation,
+    descriptionValidation,
+    priceValidation,
+    imgValidation,
+    idValidator,
+    doesDishExist,
+    doesDishIdMatchRoute,
+    update,
+  ],
 };
