@@ -8,7 +8,7 @@ router
   .route("/:dishId")
   .get(controller.read)
   // .post(controller.create)
-  // .put(controller.update)
+  .put(controller.update)
   // .delete(controller.delete)
   .all(methodNotAllowed);
 

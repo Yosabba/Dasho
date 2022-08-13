@@ -76,17 +76,17 @@ const imgValidation = (req, res, next) => {
   }
 };
 
-const doesExist = (req, res, next) => {
+const doesDishExist = (req, res, next) => {
   const { dishId } = req.params;
-  const foundDish = dishes.find((dish) => dish.id == dishId);
+  const dish = dishes.find((dish) => dish.id == dishId);
 
-  if (!foundDish) {
+  if (!dish) {
     next({
       status: 404,
       message: "Dish not found",
     });
   }
-  res.locals.dish = foundDish;
+  res.locals.dish = dish;
   next();
 };
 
@@ -105,6 +105,17 @@ const read = (req, res) => {
   res.json({ data: res.locals.dish });
 };
 
+const update = (req, res) => {
+  const { data } = req.body;
+  const dish = res.locals.dish;
+
+  dish.name = data.name;
+  dish.description = data.description;
+  dish.price = data.price;
+  dish.image_url = data.image_url;
+  res.json({ data: dish });
+};
+
 module.exports = {
   list,
   create: [
@@ -114,5 +125,6 @@ module.exports = {
     imgValidation,
     create,
   ],
-  read: [doesExist, read],
+  read: [doesDishExist, read],
+  update: [doesDishExist, update],
 };
