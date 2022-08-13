@@ -46,7 +46,12 @@ const priceValidation = (req, res, next) => {
     data: { price = null },
   } = req.body;
 
-  if (price === null || price === "" || price <= 0 || typeof price !== "number") {
+  if (
+    price === null ||
+    price === "" ||
+    price <= 0 ||
+    typeof price !== "number"
+  ) {
     next({
       status: 400,
       message: "Price is required and must be a number",
@@ -57,19 +62,33 @@ const priceValidation = (req, res, next) => {
 };
 
 const imgValidation = (req, res, next) => {
-    const {
-        data: { image_url = null },
-    } = req.body;
+  const {
+    data: { image_url = null },
+  } = req.body;
 
-    if (image_url === null || image_url === "") {
-        next({
-            status: 400,
-            message: "Image URL is required",
-        });
-    } else {
-        next();
-    }
-}
+  if (image_url === null || image_url === "") {
+    next({
+      status: 400,
+      message: "Image URL is required",
+    });
+  } else {
+    next();
+  }
+};
+
+const doesExist = (req, res, next) => {
+  const { dishId } = req.params;
+  const foundDish = dishes.find((dish) => dish.id == dishId);
+
+  if (!foundDish) {
+    next({
+      status: 404,
+      message: "Dish not found",
+    });
+  }
+  res.locals.dish = foundDish;
+  next();
+};
 
 //CRUD
 
@@ -82,7 +101,18 @@ const create = (req, res) => {
   res.json(data);
 };
 
+const read = (req, res) => {
+  res.json({ data: res.locals.dish });
+};
+
 module.exports = {
   list,
-  create: [nameValidation, descriptionValidation, priceValidation, imgValidation, create],
+  create: [
+    nameValidation,
+    descriptionValidation,
+    priceValidation,
+    imgValidation,
+    create,
+  ],
+  read: [doesExist, read],
 };
