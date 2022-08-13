@@ -5,19 +5,17 @@ const methodDisallowed = require("../errors/methodNotAllowed");
 // TODO: Implement the /orders routes needed to make the tests pass
 
 router
-  .route("/orders/:orderId")
+  .route("/:orderId")
   // .post(controller.create)
-  // .get(controller.read)
+  .get(controller.read)
   // .put(controller.update)
   // .delete(controller.delete)
-  // .all(methodNotAllowed);
+  .all(methodDisallowed);
 
 router
   .route("/")
-  // .post(controller.create)
-  // .get(controller.list)
-  // .put(controller.update)
-  // .delete(controller.delete)
-  // .all(methodNotAllowed);
+  .post(controller.create)
+  .get(controller.list)
+  .all(methodDisallowed);
 
 module.exports = router;
