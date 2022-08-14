@@ -112,7 +112,7 @@ const statusValidation = (req, res, next) => {
 
 //CRUD
 
-const create = (req, res, next) => {
+const create = (req, res) => {
   const data = {
     id: nextId(orders),
     ...req.body.data,
@@ -122,18 +122,25 @@ const create = (req, res, next) => {
   res.json(data);
 };
 
-const read = (req, res, next) => {
+const read = (req, res) => {
   const { order } = res.locals;
   res.json({ data: order });
 };
 
-const update = (req, res, next) => {
+const update = (req, res) => {
   const { order } = res.locals;
   const { data } = req.body;
 
   order.deliverTo = data.deliverTo;
   order.mobileNumber = data.mobileNumber;
   order.status = data.status;
+  res.json({ data: order });
+};
+
+const deleteOrder = (req, res) => {
+  const { order } = res.locals;
+  const index = orders.indexOf(order);
+  orders.splice(index, 1);
   res.json({ data: order });
 };
 
@@ -155,4 +162,5 @@ module.exports = {
     mobileNumberValidation,
     update,
   ],
+  delete: [findOrder, doesIdMatchRoute, deleteOrder],
 };
