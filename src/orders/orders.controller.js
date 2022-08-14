@@ -70,6 +70,46 @@ const findOrder = (req, res, next) => {
   next();
 };
 
+const doesIdMatchRoute = (req, res, next) => {
+  const { orderId } = req.params;
+  const {
+    data: { id },
+  } = req.body;
+
+  if (!id) {
+    next();
+  } else if (id && id !== orderId) {
+    next({
+      status: 400,
+      message: `Order id does not match route id. Order: ${id}, Route: ${orderId}.`,
+    });
+  }
+  next();
+};
+
+const statusValidation = (req, res, next) => {
+  const {
+    data: { status },
+  } = req.body;
+
+  const newS = res.locals.order.status;
+
+  if (status === "" || status === null) {
+    next({
+      status: 400,
+      message:
+        "Order must have a status of pending, preparing, out-for-delivery, delivered",
+    });
+  } else if (newS === "delivered") {
+    next({
+      status: 400,
+      message: "A delivered order cannot be changed",
+    });
+  }
+
+  next();
+};
+
 //CRUD
 
 const create = (req, res, next) => {
@@ -87,6 +127,16 @@ const read = (req, res, next) => {
   res.json({ data: order });
 };
 
+const update = (req, res, next) => {
+  const { order } = res.locals;
+  const { data } = req.body;
+
+  order.deliverTo = data.deliverTo;
+  order.mobileNumber = data.mobileNumber;
+  order.status = data.status;
+  res.json({ data: order });
+};
+
 module.exports = {
   list,
   create: [
@@ -96,4 +146,13 @@ module.exports = {
     create,
   ],
   read: [findOrder, read],
+  update: [
+    findOrder,
+    doesIdMatchRoute,
+    idValidation,
+    statusValidation,
+    deliverToAddressValidation,
+    mobileNumberValidation,
+    update,
+  ],
 };

@@ -1,4 +1,4 @@
-const router = require("express").Router({ mergeParams: true });
+const router = require("express").Router();
 const controller = require("./orders.controller");
 const methodDisallowed = require("../errors/methodNotAllowed");
 
@@ -6,9 +6,8 @@ const methodDisallowed = require("../errors/methodNotAllowed");
 
 router
   .route("/:orderId")
-  // .post(controller.create)
   .get(controller.read)
-  // .put(controller.update)
+  .put(controller.update)
   // .delete(controller.delete)
   .all(methodDisallowed);
 
@@ -19,3 +18,5 @@ router
   .all(methodDisallowed);
 
 module.exports = router;
+
+//
