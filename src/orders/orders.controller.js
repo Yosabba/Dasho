@@ -158,7 +158,7 @@ const deleteOrder = (req, res) => {
   const { order } = res.locals;
   const index = orders.indexOf(order);
   orders.splice(index, 1);
-  res.json({ data: order });
+  res.status(204).send();
 };
 
 module.exports = {
