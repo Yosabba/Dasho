@@ -1,183 +1,181 @@
 const path = require("path");
-
-// Use the existing order data
 const orders = require(path.resolve("src/data/orders-data"));
-
-// Use this function to assigh ID's when necessary
 const nextId = require("../utils/nextId");
 
-// TODO: Implement the /orders handlers needed to make the tests pass
-
-const list = (req, res) => {
-  res.json(orders);
-};
-
-const deliverToAddressValidation = (req, res, next) => {
-  const {
-    data: { deliverTo = null },
-  } = req.body;
-
-  if (deliverTo === "" || deliverTo === null) {
-    next({
-      status: 400,
-      message: "Please provide a valid address to deliver to",
-    });
-  }
-
-  next();
-};
-
-const mobileNumberValidation = (req, res, next) => {
-  const {
-    data: { mobileNumber = null },
-  } = req.body;
-
-  if (mobileNumber === "" || mobileNumber === null) {
-    next({
-      status: 400,
-      message: "Please provide a valid mobile number",
-    });
-  }
-
-  next();
-};
-
-const idValidation = (req, res, next) => {
-  const {
-    data: { id },
-  } = req.body;
-
-  if (id === "") {
-    next({
-      status: 400,
-      message: "Please provide a valid id",
-    });
-  }
-
-  next();
-};
-
-const findOrder = (req, res, next) => {
-  const { orderId } = req.params;
-  const order = orders.find((order) => order.id === orderId);
-  if (!order) {
-    next({
+//Functional Middleware functions:
+const orderExists = (req, res, next) => {
+  const orderId = req.params.orderId;
+  res.locals.orderId = orderId;
+  const foundOrder = orders.find((order) => order.id === orderId);
+  if (!foundOrder) {
+    return next({
       status: 404,
-      message: "Order not found",
+      message: `Order not found: ${orderId}`,
     });
   }
-  res.locals.order = order;
-  next();
+  res.locals.order = foundOrder;
 };
 
-const doesIdMatchRoute = (req, res, next) => {
-  const { orderId } = req.params;
-  const {
-    data: { id },
-  } = req.body;
-
-  if (!id) {
-    next();
-  } else if (id && id !== orderId) {
-    next({
+const orderValidDeliverTo = (req, res, next) => {
+  const { data = null } = req.body;
+  res.locals.newOD = data;
+  const orderdeliverTo = data.deliverTo;
+  if (!orderdeliverTo || orderdeliverTo.length === 0) {
+    return next({
       status: 400,
-      message: `Order id does not match route id. Order: ${id}, Route: ${orderId}.`,
+      message: "Order must include a deliverTo",
     });
   }
-  next();
 };
 
-const statusValidation = (req, res, next) => {
-  const {
-    data: { status },
-  } = req.body;
+const orderHasValidMobileNumber = (req, res, next) => {
+  const orderMobileNumber = res.locals.newOD.mobileNumber;
+  if (!orderMobileNumber || orderMobileNumber.length === 0) {
+    return next({
+      status: 400,
+      message: "Order must include a mobileNumber",
+    });
+  }
+};
 
-  const newS = res.locals.order.status;
+const orderHasDishes = (req, res, next) => {
+  const orderDishes = res.locals.newOD.dishes;
+  if (!orderDishes || !Array.isArray(orderDishes) || orderDishes.length <= 0) {
+    return next({
+      status: 400,
+      message: "Order must include at least one dish",
+    });
+  }
+  res.locals.dishes = orderDishes;
+};
 
-  if (status === "" || status === null) {
-    next({
+const orderHasValidDishes = (req, res, next) => {
+  const orderDishes = res.locals.dishes;
+  orderDishes.forEach((dish) => {
+    const dishQuantity = dish.quantity;
+    if (!dishQuantity || typeof dishQuantity != "number" || dishQuantity <= 0) {
+      return next({
+        status: 400,
+        message: `Dish ${orderDishes.indexOf(
+          dish
+        )} must have a quantity that is an integer greater than 0`,
+      });
+    }
+  });
+};
+
+const orderIdMatches = (req, res, next) => {
+  const paramId = res.locals.orderId;
+  const { id = null } = res.locals.newOD;
+  if (!id || id === null) {
+    res.locals.newOD.id = res.locals.orderId;
+  } else if (paramId != id) {
+    return next({
+      status: 400,
+      message: `Order id does not match route id. Order: ${id}, Route: ${paramId}`,
+    });
+  }
+};
+
+const incomingStatusIsValid = (req, res, next) => {
+  const { status = null } = res.locals.newOD;
+  if (!status || status.length === 0 || status === "invalid") {
+    return next({
       status: 400,
       message:
         "Order must have a status of pending, preparing, out-for-delivery, delivered",
     });
-  } else if (newS === "delivered") {
-    next({
+  }
+};
+
+const extantStatusIsValid = (req, res, next) => {
+  const { status = null } = res.locals.order;
+  if (status === "delivered") {
+    return next({
       status: 400,
       message: "A delivered order cannot be changed",
     });
   }
-
-  next();
 };
 
-const deleteValidation = (req, res, next) => {
-  const {
-    data: { status },
-  } = req.body;
-
-  const currentStatus = res.locals.order.status;
-
-  if (currentStatus !== "pending") {
-    next({
+const extantStatusIsPending = (req, res, next) => {
+  const { status = null } = res.locals.order;
+  if (status !== "pending") {
+    return next({
       status: 400,
       message: "An order cannot be deleted unless it is pending",
     });
   }
+};
 
+//Clarity Middleware Functions
+const createValidation = (req, res, next) => {
+  orderValidDeliverTo(req, res, next);
+  orderHasValidMobileNumber(req, res, next);
+  orderHasDishes(req, res, next);
+  orderHasValidDishes(req, res, next);
   next();
 };
 
-//CRUD
-
-const create = (req, res) => {
-  const data = {
-    id: nextId(orders),
-    ...req.body.data,
-  };
-
-  orders.push(data);
-  res.json(data);
+const readValidation = (req, res, next) => {
+  orderExists(req, res, next);
+  next();
 };
 
-const read = (req, res) => {
-  const { order } = res.locals;
-  res.json({ data: order });
+const updateValidation = (req, res, next) => {
+  orderExists(req, res, next);
+  orderValidDeliverTo(req, res, next);
+  orderHasValidMobileNumber(req, res, next);
+  orderHasDishes(req, res, next);
+  orderHasValidDishes(req, res, next);
+  orderIdMatches(req, res, next);
+  incomingStatusIsValid(req, res, next);
+  extantStatusIsValid(req, res, next);
+  next();
 };
 
-const update = (req, res) => {
-  const { order } = res.locals;
-  const { data } = req.body;
-
-  order.deliverTo = data.deliverTo;
-  order.mobileNumber = data.mobileNumber;
-  order.status = data.status;
-  res.json({ data: order });
+const deleteValidation = (req, res, next) => {
+  orderExists(req, res, next);
+  extantStatusIsPending(req, res, next);
+  next();
 };
 
-const deleteOrder = (req, res) => {
-  const { order } = res.locals;
-  const index = orders.indexOf(order);
+//Handlers:
+function create(req, res) {
+  const newOrderData = res.locals.newOD;
+  newOrderData.id = nextId();
+  orders.push(newOrderData);
+  res.status(201).json({ data: newOrderData });
+}
+
+function read(req, res) {
+  res.status(200).json({ data: res.locals.order });
+}
+
+function update(req, res) {
+  const newData = res.locals.newOD;
+  const oldData = res.locals.order;
+  const index = orders.indexOf(oldData);
+  for (const key in newData) {
+    orders[index][key] = newData[key];
+  }
+  res.status(200).json({ data: orders[index] });
+}
+
+function list(req, res) {
+  res.status(200).json({ data: orders });
+}
+
+function destroy(req, res) {
+  const index = orders.indexOf(res.locals.order);
   orders.splice(index, 1);
-  res.status(204).send();
-};
+  res.sendStatus(204);
+}
 
 module.exports = {
+  create: [createValidation, create],
+  read: [readValidation, read],
+  update: [updateValidation, update],
+  delete: [deleteValidation, destroy],
   list,
-  create: [
-    idValidation,
-    deliverToAddressValidation,
-    mobileNumberValidation,
-    create,
-  ],
-  read: [findOrder, read],
-  update: [
-    findOrder,
-    doesIdMatchRoute,
-    idValidation,
-    statusValidation,
-    deliverToAddressValidation,
-    mobileNumberValidation,
-    update,
-  ],
-  delete: [findOrder, doesIdMatchRoute, deleteValidation, deleteOrder],
 };
