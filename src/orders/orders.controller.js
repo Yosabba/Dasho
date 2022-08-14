@@ -110,6 +110,23 @@ const statusValidation = (req, res, next) => {
   next();
 };
 
+const deleteValidation = (req, res, next) => {
+  const {
+    data: { status },
+  } = req.body;
+
+  const currentStatus = res.locals.order.status;
+
+  if (currentStatus !== "pending") {
+    next({
+      status: 400,
+      message: "An order cannot be deleted unless it is pending",
+    });
+  }
+
+  next();
+};
+
 //CRUD
 
 const create = (req, res) => {
@@ -162,5 +179,5 @@ module.exports = {
     mobileNumberValidation,
     update,
   ],
-  delete: [findOrder, doesIdMatchRoute, deleteOrder],
+  delete: [findOrder, doesIdMatchRoute, deleteValidation, deleteOrder],
 };
