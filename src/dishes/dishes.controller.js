@@ -93,18 +93,18 @@ function updateValidation(req, res, next) {
 }
 
 //Handlers:
-const create = (req, res) => {
+function create(req, res) {
   const newDishData = res.locals.newDD;
   newDishData.id = nextId();
   dishes.push(newDishData);
   res.status(201).json({ data: newDishData });
-};
+}
 
-const read = (req, res) => {
+function read(req, res) {
   res.status(200).json({ data: res.locals.dish });
-};
+}
 
-const update = (req, res) => {
+function update(req, res) {
   const newData = res.locals.newDD;
   const oldData = res.locals.dish;
   const index = dishes.indexOf(oldData);
@@ -112,11 +112,11 @@ const update = (req, res) => {
     dishes[index][key] = newData[key];
   }
   res.status(200).json({ data: dishes[index] });
-};
+}
 
-const list = (req, res) => {
+function list(req, res) {
   res.status(200).json({ data: dishes });
-};
+}
 
 module.exports = {
   create: [createValidation, create],

@@ -140,18 +140,18 @@ function deleteValidation(req, res, next) {
 }
 
 //Handlers:
-const create = (req, res) => {
+function create(req, res) {
   const newOrderData = res.locals.newOD;
   newOrderData.id = nextId();
   orders.push(newOrderData);
   res.status(201).json({ data: newOrderData });
-};
+}
 
-const read = (req, res) => {
+function read(req, res) {
   res.status(200).json({ data: res.locals.order });
-};
+}
 
-const update = (req, res) => {
+function update(req, res) {
   const newData = res.locals.newOD;
   const oldData = res.locals.order;
   const index = orders.indexOf(oldData);
@@ -159,17 +159,17 @@ const update = (req, res) => {
     orders[index][key] = newData[key];
   }
   res.status(200).json({ data: orders[index] });
-};
+}
 
-const list = (req, res) => {
+function list(req, res) {
   res.status(200).json({ data: orders });
-};
+}
 
-const destroy = (req, res) => {
+function destroy(req, res) {
   const index = orders.indexOf(res.locals.order);
   orders.splice(index, 1);
   res.sendStatus(204);
-};
+}
 
 module.exports = {
   create: [createValidation, create],
