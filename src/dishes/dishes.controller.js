@@ -3,7 +3,7 @@ const dishes = require(path.resolve("src/data/dishes-data"));
 const nextId = require("../utils/nextId");
 
 //Functional Middleware functions:
-const dishExists = (req, res, next) => {
+function dishExists(req, res, next) {
   const dishId = req.params.dishId;
   res.locals.dishId = dishId;
   const foundDish = dishes.find((dish) => dish.id === dishId);
@@ -14,9 +14,9 @@ const dishExists = (req, res, next) => {
     });
   }
   res.locals.dish = foundDish;
-};
+}
 
-const dishValidName = (req, res, next) => {
+function dishValidName(req, res, next) {
   const { data = null } = req.body;
   res.locals.newDD = data;
   const dishName = data.name;
@@ -26,9 +26,9 @@ const dishValidName = (req, res, next) => {
       message: "Dish must include a name",
     });
   }
-};
+}
 
-const dishHasValidDescription = (req, res, next) => {
+function dishHasValidDescription(req, res, next) {
   const dishDescription = res.locals.newDD.description;
   if (!dishDescription || dishDescription.length === 0) {
     return next({
@@ -36,9 +36,9 @@ const dishHasValidDescription = (req, res, next) => {
       message: "Dish must include a description",
     });
   }
-};
+}
 
-const dishHasValidPrice = (req, res, next) => {
+function dishHasValidPrice(req, res, next) {
   const dishPrice = res.locals.newDD.price;
   if (!dishPrice || typeof dishPrice != "number" || dishPrice <= 0) {
     return next({
@@ -46,9 +46,8 @@ const dishHasValidPrice = (req, res, next) => {
       message: "Dish must have a price that is an integer greater than 0",
     });
   }
-};
-
-const dishHasValidImage = (req, res, next) => {
+}
+function dishHasValidImage(req, res, next) {
   const dishImage = res.locals.newDD.image_url;
   if (!dishImage || dishImage.length === 0) {
     return next({
@@ -56,9 +55,9 @@ const dishHasValidImage = (req, res, next) => {
       message: "Dish must include an image_url",
     });
   }
-};
+}
 
-const dishIdMatches = (req, res, next) => {
+function dishIdMatches(req, res, next) {
   const paramId = res.locals.dishId;
   const { id = null } = res.locals.newDD;
   if (paramId != id && id) {
@@ -67,23 +66,23 @@ const dishIdMatches = (req, res, next) => {
       message: `Dish id does not match route id. Dish: ${id}, Route: ${paramId}`,
     });
   }
-};
+}
 
 //Clarity Middleware Functions
-const createValidation = (req, res, next) => {
+function createValidation(req, res, next) {
   dishValidName(req, res, next);
   dishHasValidDescription(req, res, next);
   dishHasValidPrice(req, res, next);
   dishHasValidImage(req, res, next);
   next();
-};
+}
 
-const readValidation = (req, res, next) => {
+function readValidation(req, res, next) {
   dishExists(req, res, next);
   next();
-};
+}
 
-const updateValidation = (req, res, next) => {
+function updateValidation(req, res, next) {
   dishExists(req, res, next);
   dishValidName(req, res, next);
   dishHasValidDescription(req, res, next);
@@ -91,21 +90,21 @@ const updateValidation = (req, res, next) => {
   dishHasValidImage(req, res, next);
   dishIdMatches(req, res, next);
   next();
-};
+}
 
 //Handlers:
-function create(req, res) {
+const create = (req, res) => {
   const newDishData = res.locals.newDD;
   newDishData.id = nextId();
   dishes.push(newDishData);
   res.status(201).json({ data: newDishData });
-}
+};
 
-function read(req, res) {
+const read = (req, res) => {
   res.status(200).json({ data: res.locals.dish });
-}
+};
 
-function update(req, res) {
+const update = (req, res) => {
   const newData = res.locals.newDD;
   const oldData = res.locals.dish;
   const index = dishes.indexOf(oldData);
@@ -113,11 +112,11 @@ function update(req, res) {
     dishes[index][key] = newData[key];
   }
   res.status(200).json({ data: dishes[index] });
-}
+};
 
-function list(req, res) {
+const list = (req, res) => {
   res.status(200).json({ data: dishes });
-}
+};
 
 module.exports = {
   create: [createValidation, create],
